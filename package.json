@@ -1,0 +1,8 @@
+{
+  "name": "azure-functions-basic-auth",
+  "version": "0.0.1",
+  "dependencies": {
+    "crypto": "0.0.3",
+    "q": "^1.5.0"
+  }
+}
