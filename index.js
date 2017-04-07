@@ -14,8 +14,7 @@ var storedCredentials;
  */
 module.exports.init = function(credentialsFile) {
     var fileUpdates = false;
-    storedCredentials = require(credentialsFile);
-    console.log(JSON.stringify(storedCredentials));
+    storedCredentials =  JSON.parse(fs.readFileSync(credentialsFile, 'utf8'));
 
     //Cycle through all the credentials and make sure they're hashed. If not, hash them & update the file.
     for (var username in storedCredentials) {
@@ -57,20 +56,12 @@ function send401(results){
             "Content-Type": "text/html; charset=iso-8859-1"
 
         },
-        body : `<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
-    <html><head>
-    <title>401 Authorization Required</title>
-    </head><body>
-    <h1>Authorization Required</h1>
-    <p>This server could not verify that you
-    are authorized to access the document
-    requested.  Either you supplied the wrong
-    credentials (e.g., bad password), or your
-    browser doesn't understand how to supply
-    the credentials required.</p>
-    <p>Additionally, a 401 Authorization Required
-    error was encountered while trying to use an ErrorDocument to handle the request.</p>
-    </body></html>`
+        body :  '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"><html><head><title>401 Authorization Required</title>' +
+                '</head><body><h1>Authorization Required</h1><p>This server could not verify that you are authorized to ' +
+                'access the document requested.  Either you supplied the wrong credentials (e.g., bad password), or your' +
+                "browser doesn't understand how to supply the credentials required.</p><p>Additionally, a " +
+                '401 Authorization Required error was encountered while trying to use an ErrorDocument to handle' +
+                ' the request.</p></body></html>'
     };
     results.context.done();
     deferred.reject(false);
