@@ -111,7 +111,8 @@ function extractCredentials(context){
 /**
  * validateUser - Validates if the set of credentials are valid or not.
  * @param user - User object of format { username: USERNAME, password: PASSWORD, context: AZURECONTEXT }
- * @returns {*} - Promise - Resolves if the credentials are valid, rejects for any failure of if the credentials ar invalid.
+ * @returns {*} - Promise - Resolves if the credentials are valid with the context,
+ *                          rejects for any failure of if the credentials ar invalid.
  */
 function validateUser(user) {
     var deferred = q.defer();
@@ -126,7 +127,7 @@ function validateUser(user) {
             var hexSalt = pwdHashDetails[1];
             if (pwdHash === "sha256:" + hexSalt + ":" + hashPwd(user.password, hexSalt)) {
                 user.context.req.user = user.username;
-                deferred.resolve({success: true, user: user.username, context: user.context });
+                deferred.resolve(user.context);
             } else {
                 deferred.reject({success: false, reason: 'Invalid password', context: user.context});
             }
