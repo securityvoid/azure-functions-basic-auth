@@ -12,14 +12,15 @@ var storedCredentials;
  * @param credentialsFile - JSON file in the format { USERNAME : PASSWORD, USERNAME2 : PASSWORD2 }, or of the hashed
  * version: e.g. { USERNAME : sha256:SALT:HASHEDPASSWORD }
  */
-module.exports = function(credentialsFile) {
+module.exports.init = function(credentialsFile) {
     var fileUpdates = false;
-    this.storedCredentials = require(credentialsFile);
+    storedCredentials = require(credentialsFile);
+    console.log(JSON.stringify(storedCredentials));
 
     //Cycle through all the credentials and make sure they're hashed. If not, hash them & update the file.
-    for (var username in this.storeddCredentials) {
-        if (this.storeddCredentials.hasOwnProperty(username)) {
-            var pwd = this.storedCredentials[username];
+    for (var username in storedCredentials) {
+        if (storedCredentials.hasOwnProperty(username)) {
+            var pwd = storedCredentials[username];
             var pwdHashDetails = /^sha256:([0-9a-fA-F]{32}):([0-9a-fA-F]{64})$/.exec(pwd);
             if(!pwdHashDetails){
                 var hexSalt = crypto.randomBytes(16).toString('hex');
@@ -31,16 +32,14 @@ module.exports = function(credentialsFile) {
     if(fileUpdates){//If updated, write new file with passwords hashed
         fs.writeFile(credentialsFile, JSON.stringify(storedCredentials), 'utf8');
     }
+
+    return this;
 }
 
-/**
- * validateUsers - Extracts the Basic Header out of the request and validates the credentials are correct.
- * If the credentials are correct it adds the username to req.user . If anything is invalid it sends a 401
- * response.
- */
-module.exports.validateUsers = function(context){
-    return extractCredentials(context).then(validateUser, send401);
+module.exports.basicAuth = function(context){
+    return extractCredentials(context).then(validateUser, send401).catch(send401);
 }
+
 
 /**
  * send401 - Sends a 401 request asking for valid credentials, and returns a deferred reject response.
@@ -87,11 +86,11 @@ function send401(results){
 function extractCredentials(context){
     var deferred = q.defer();
     try {
-        if(!context.req.headers || !context.req.authorization)
+        if(!context.req.headers || !context.req.headers.authorization)
             deferred.reject({success:false, reason: 'No Auth Header', context: context});
         else {
             var basic = context.req.headers.authorization;
-            var matches = /^Basic\s((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=))?$/i.exec(basic);
+            var matches = /^Basic\s((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)$/i.exec(basic);
 
             //Convert Base64 -> UINT8Array -> String
             var credentialString = String.fromCharCode.apply(null, Buffer.from(matches[1], 'base64'));
@@ -105,6 +104,7 @@ function extractCredentials(context){
         context.log("ERROR extractCredentials" + e.message);
         deferred.reject({success: false, reason: e.message , context: context });
     }
+    return deferred.promise;
 }
 
 /**
@@ -125,7 +125,7 @@ function validateUser(user) {
             var hexSalt = pwdHashDetails[1];
             if (pwdHash === "sha256:" + hexSalt + ":" + hashPwd(user.password, hexSalt)) {
                 user.context.req.user = user.username;
-                deferred.resolve({success: true, user: username.username, context: user.context });
+                deferred.resolve({success: true, user: user.username, context: user.context });
             } else {
                 deferred.reject({success: false, reason: 'Invalid password', context: user.context});
             }
@@ -138,10 +138,11 @@ function validateUser(user) {
 
 
 function hashPwd(password, hexSalt){
-    var salt = (hexSalt) ? hex2a(hexSalt) :  crypto.randomBytes(16).toString('hex');
-    var hashPwd = crypto.createHash('sha256').update(salt + password);
+    const hasher = crypto.createHash('sha256');
+    var salt = hex2a(hexSalt);
+    var hashPwd = hasher.update(salt + password);
     for(var x =0; x < 199; x++){
-        var hashPwd = crypto.createHash('sha256').update(salt + hashPwd);
+        hashPwd = hasher.update(salt + hashPwd);
     }
     return hashPwd.digest('hex');
 }
