@@ -91,7 +91,8 @@ function extractCredentials(context){
         else {
             var basic = context.req.headers.authorization;
             var matches = /^Basic\s((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)$/i.exec(basic);
-
+            if(!matches)
+                throw new Error("Header doesn't match");
             //Convert Base64 -> UINT8Array -> String
             var credentialString = String.fromCharCode.apply(null, Buffer.from(matches[1], 'base64'));
             var sentCreds = /([^:]+):([^$]+)/.exec(credentialString);
