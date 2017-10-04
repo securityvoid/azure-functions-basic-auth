@@ -9,7 +9,7 @@ var storedCredentials;
 /**
  * File Constructor - Takes an incoming file and extracts it for username/password combinations.
  * If the passwords are not already hashed, it will hash and resave the passwords.
- * @param credentialsFile - JSON file in the format { USERNAME : PASSWORD, USERNAME2 : PASSWORD2 }, or of the hashed
+ * @param credentialsFile - Path to the JSON file in the format { USERNAME : PASSWORD, USERNAME2 : PASSWORD2 }, or of the hashed
  * version: e.g. { USERNAME : sha256:SALT:HASHEDPASSWORD }
  */
 module.exports.init = function(credentialsFile) {
