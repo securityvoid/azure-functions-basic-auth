@@ -39,6 +39,9 @@ module.exports.basicAuth = function(context){
     return extractCredentials(context).then(validateUser, send401).catch(send401);
 }
 
+function redirectHTTPS(context){
+
+}
 
 /**
  * send401 - Sends a 401 request asking for valid credentials, and returns a deferred reject response.
